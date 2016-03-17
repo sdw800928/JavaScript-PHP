@@ -1,0 +1,154 @@
+<HTML>
+<head>
+    <title>HW04</title>
+    <style type="text/css">
+        form {
+            text-align: center;
+        }
+    </style>
+    <SCRIPT LANGUAGE="JavaScript">
+        
+        function generateHTML(xmlDoc){ 
+            ELEMENT_NODE = 1; // MS parser doesn't define Node.ELEMENT_NODE
+                        
+            root=xmlDoc.DocumentElement;
+            
+            html_text="<html><head><title>XML Parse Result</title></head><body>";
+            html_text+="<table border='2' width='880'>";        
+            html_text+="<thead style='font-weight:bold'><tr>";
+            // output the headers
+        
+            var HEAD=xmlDoc.getElementsByTagName("Data");
+            for(i=0;i<HEAD.length;i++){ 
+                if(HEAD.item(i).nodeType==ELEMENT_NODE){ 
+                    html_text+="<th>";
+                    if(HEAD.item(i).hasChildNodes() == true ){
+                        header=HEAD.item(i).firstChild.nodeValue;
+                        html_text+=header;
+                    }
+                    html_text+="</th>";
+                } 
+            }
+            html_text+="</tr></thead>";
+        
+        
+            var Radio=xmlDoc.getElementsByTagName("Row");
+        
+            // output out the values
+            html_text+="<tbody>";
+            for(i=0;i<Radio.length;i++) { //do for all planes
+                var RadioNodeList=Radio.item(i).childNodes; //get properties of a plane
+                html_text+="<tr>"; //start a new row of the output table
+                for(j=0;j<RadioNodeList.length;j++){
+                    if(RadioNodeList.item(j).nodeType==ELEMENT_NODE){
+                        if(RadioNodeList.item(j).nodeName=="Location"){
+                            var Locationlist = RadioNodeList.item(j).childNodes;
+                            html_text+="<td height='100'><ul>";
+                            for( q=0;q<Locationlist.length;q++){
+                                if(Locationlist.item(q).nodeType==ELEMENT_NODE){
+                                    if ( Locationlist.item(q).hasChildNodes() == true ) 
+                                        html_text+="<li>"+Locationlist.item(q).firstChild.nodeValue+"</li>";
+                                }
+                            }
+                            html_text+="</ul></td>";
+                        }
+                        else if (RadioNodeList.item(j).nodeName=="HomePage"){//handle images separately
+                            html_text += "<td height='100'>";
+                            if ( RadioNodeList.item(j).hasChildNodes() == true ) {
+                                html_text+="<a target='_blank' href='"+RadioNodeList.item(j).firstChild.nodeValue+"'>"+ RadioNodeList.item(j).firstChild.nodeValue+"</a>"; 
+                            }
+                            html_text += "</td>";
+                        }
+                        else if (RadioNodeList.item(j).nodeName=="Logo"){//handle images separately
+                            html_text += "<td height='100'>";
+                            if ( RadioNodeList.item(j).hasChildNodes() == true ) {
+                                html_text+="<img src='"+RadioNodeList.item(j).firstChild.nodeValue+"' width='100%' height='100%'>"; 
+                            }
+                            html_text += "</td>";
+                        }
+                        else {
+                            html_text += "<td height='100'>";
+                            if ( RadioNodeList.item(j).hasChildNodes() == true ) {
+                                html_text+=RadioNodeList.item(j).firstChild.nodeValue;
+                            }
+                            html_text += "</td>";
+                        } 
+                    } 
+                }
+                html_text+="</tr>"; 
+            }
+            html_text+="</tbody>"; html_text+="</table>";
+            html_text+="</body></html>"; 
+        }
+        
+        function viewXML(what){
+            //var mURL = what.URL.value;
+            var mURL= document.getElementById("URLinput").value;
+            
+            function loadXML(url) {
+                if (window.XMLHttpRequest){// code for IE7+, Firefox, Chrome, Opera, Safari
+                    xmlhttp=new XMLHttpRequest(); 
+                }
+                else { // code for IE6, IE5
+                    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+                }
+                xmlhttp.open("GET",url,false);
+                xmlhttp.send();
+                xmlDoc=xmlhttp.responseXML;
+                return xmlDoc; 
+            }
+            
+            if(mURL==''){
+                alert('empty URL!');
+            }
+            else{
+                xmlDoc = loadXML(mURL); //??
+                if (window.ActiveXObject){  //if IE, simply execute script (due to async prop).
+                    if (xmlDoc.parseError.errorCode != 0) {
+                        var myErr = xmlDoc.parseError;
+                        generateError(xmlDoc);
+                        hWin = window.open("", "Error", "height=300,width=340");
+                        hWin.document.write(html_text);
+                    } 
+                    else { 
+                        generateHTML(xmlDoc);
+                        hWin = window.open("", "Assignment4", "height=1000,width=900");
+                        hWin.document.write(html_text); 
+                    }
+                }   
+                else { //else if FF, execute script once XML object has loaded
+                    if (xmlhttp.status == 404)
+                        alert("doesn't find XML. http.status = "+xmlhttp.status);
+                    else if(xmlDoc==null)
+                        alert('Error in XML file');                    
+                    else if(xmlDoc.documentElement.nodeName=="parsererror")                         
+                        alert('Error in XML file');                     
+                    else if(xmlDoc.getElementsByTagName("parsererror").length!=0)                        
+                        alert('Error in XML file');
+                    else if ( xmlDoc.getElementsByTagName("Row").length == 0 ) 
+                        alert('XML empty');
+                    
+                    else{
+                        xmlDoc.onload=generateHTML(xmlDoc); 
+                        //generateHTML(xmlDoc);  
+                        hWin = window.open("", "Assignment4", "height=1000,width=900");
+                        hWin.document.write(html_text); 
+                    }
+
+                }
+                hWin.document.close();
+            }
+        }
+            
+    </SCRIPT>
+</head>
+<body>
+    <form name="myform" method="POST" id="location">
+        <p>Enter URL for Company List XML File</p>
+        <input type="text" id="URLinput" name="URL" maxlength="255" size="50" value="" />
+        <br/>
+        <br/>
+        <input type="button" name="submit" value="Submit Query" onClick="viewXML(this.form)" />
+    </form>
+</body>
+</HTML>
